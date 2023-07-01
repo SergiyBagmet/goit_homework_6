@@ -45,15 +45,18 @@ def normalize(name : str) -> str :
                 new_name += "_"    
         return new_name
 
-def  extract_archive(archive_path: Path) :
+def  extract_archive(archive_path: Path, del_archive=True) :
     """
     разархивируем архив в папку с именем архива
     """
     target_dir = archive_path.parent / archive_path.stem # путь для созданием папки с именем архива
     target_dir.mkdir(exist_ok=True) # создаем папку для архива
-
-    shutil.unpack_archive(archive_path, target_dir) # распаковка
-
+    try:
+        shutil.unpack_archive(archive_path, target_dir) # распаковка
+        if del_archive: # удаляем архив по флагу после распаковки
+            archive_path.unlink()
+    except ValueError:
+        print(f"Не удалось разпаковать архив : {archive_path.name}")
   
 
 
@@ -77,23 +80,23 @@ def directory_tree (path: Path) :
             if not name_dir: # если нет совпадений по константе
                 name_dir = "others"    
             
-            #заполнение словаря-> категория : [файли]
+            # заполнение сета расширений
+            # + заполнение словаря-> категория : [файли]
+            my_extens.add(item.suffix)
             if name_dir not in my_dict_files : # если нет ключа создаем ключ:спиок
-                my_dict_files[name_dir] = [item.name]
+                my_dict_files[name_dir] = [item.stem]
             else:
-                my_dict_files[name_dir].append(item.name)         
+                my_dict_files[name_dir].append(item.stem)         
 
 
             new_dir_path = main_path / name_dir # путь к новой папке для ее создание и переноса файлов
             new_dir_path.mkdir(exist_ok=True) # создаем новую папку если такой нет 
             item = item.replace(new_dir_path / item.name) # перенос файлов в папки по категориям
 
-            if name_dir == "archives": # если категория ахиви 
-                extract_archive(item) 
+            if name_dir == "archives": # если категория ахиви(файл можно разпаковать) 
+                extract_archive(item) # разпаковка + по умолчанию флаг на удаление 
             
             
-            
-
 
         elif item.is_dir() and (item.name not in FILE_EXTENSIONS) : # проверка на папку и она не из наших ключей
 
@@ -112,9 +115,19 @@ if __name__ == "__main__" :
         all_extens.update(ext)
 
     my_dict_files = {} # словарь список файлов по категориям
+    my_extens = set()
 
     directory_tree(path)
     
+    print("\nсписок файлов в сортированной дериктории  по категориям :\n")
+    for key, val in my_dict_files.items() :
+        val_str = ", ".join(val)
+        print("{:<10}: {}".format(key,val_str))
     
+    print("\nПеречень всех известних расширений в сортированной директории :\n")
+    know_extens = all_extens.intersection(my_extens)
+    print("\t".join(know_extens))
 
-    
+    print("\nПеречень всех расширений не известних данному скрипту :\n")
+    n_know_extens = my_extens.difference(know_extens)
+    print("\t".join(n_know_extens))
