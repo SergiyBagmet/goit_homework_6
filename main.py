@@ -45,7 +45,7 @@ def normalize(name : str) -> str :
         return new_name
 
 
-
+  
 
 
 
@@ -56,9 +56,33 @@ def directory_tree (path: Path) :
     """
     for item in path.iterdir() :
         if item.is_file():
-
+            
             new_name = normalize(str(item.stem)) + str(item.suffix) # новое имя + суфикс
-            item = Path.rename(item, item.parent / new_name) # переименование файлов
+            item = item.rename(item.parent / new_name) # переименование файлов + присваеваем новий путь
+
+            name_dir = "" # получаем имя для новой папки соответствующей файловой группе 
+            for key,val in FILE_EXTENSIONS.items():
+                if item.suffix in val : #
+                    name_dir = key
+                    break
+            if not name_dir: # если нет совпадений по константе
+                name_dir = "others"    
+            
+            new_dir_path = main_path / name_dir # путь к новой папке для ее создание и переноса файлов
+            new_dir_path.mkdir(exist_ok=True) # создаем новую папку если такой нет 
+            # перенос файлов 
+
+
+            #заполнение словаря-> категория : [файли]
+            if name_dir not in my_dict_files : # если нет ключа создаем ключ:спиок
+                my_dict_files[name_dir] = [item.name]
+               
+
+            else:
+                my_dict_files[name_dir].append(item.name)     
+            
+            
+
 
         elif item.is_dir():
             directory_tree(path / item.name)
@@ -66,4 +90,16 @@ def directory_tree (path: Path) :
 
 
 if __name__ == "__main__" :
+
+    # получаем сет всех известих расширений из константного словаря
+    all_extens = set()
+    for ext in FILE_EXTENSIONS.values():
+        all_extens.update(ext)
+
+    my_dict_files = {} # словарь список файлов по категориям
+
     directory_tree(path)
+    
+    
+
+    
