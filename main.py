@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import sys
 
 arg = sys.argv[1] # название папки для сортировки (рабочий стол/dir)
@@ -44,6 +45,14 @@ def normalize(name : str) -> str :
                 new_name += "_"    
         return new_name
 
+def  extract_archive(archive_path: Path) :
+    """
+    разархивируем архив в папку с именем архива
+    """
+    target_dir = archive_path.parent / archive_path.stem # путь для созданием папки с именем архива
+    target_dir.mkdir(exist_ok=True) # создаем папку для архива
+
+    shutil.unpack_archive(archive_path, target_dir) # распаковка
 
   
 
@@ -57,7 +66,7 @@ def directory_tree (path: Path) :
     for item in path.iterdir() :
         if item.is_file():
             
-            new_name = normalize(str(item.stem)) + str(item.suffix) # новое имя + суфикс
+            new_name = normalize(item.stem) + item.suffix # новое имя + суфикс
             item = item.rename(item.parent / new_name) # переименование файлов + присваеваем новий путь
 
             name_dir = "" # получаем имя для новой папки соответствующей файловой группе 
@@ -68,24 +77,30 @@ def directory_tree (path: Path) :
             if not name_dir: # если нет совпадений по константе
                 name_dir = "others"    
             
-            new_dir_path = main_path / name_dir # путь к новой папке для ее создание и переноса файлов
-            new_dir_path.mkdir(exist_ok=True) # создаем новую папку если такой нет 
-            # перенос файлов 
-
-
             #заполнение словаря-> категория : [файли]
             if name_dir not in my_dict_files : # если нет ключа создаем ключ:спиок
                 my_dict_files[name_dir] = [item.name]
-               
-
             else:
-                my_dict_files[name_dir].append(item.name)     
+                my_dict_files[name_dir].append(item.name)         
+
+
+            new_dir_path = main_path / name_dir # путь к новой папке для ее создание и переноса файлов
+            new_dir_path.mkdir(exist_ok=True) # создаем новую папку если такой нет 
+            item = item.replace(new_dir_path / item.name) # перенос файлов в папки по категориям
+
+            if name_dir == "archives": # если категория ахиви 
+                extract_archive(item) 
+            
             
             
 
 
-        elif item.is_dir():
+        elif item.is_dir() and (item.name not in FILE_EXTENSIONS) : # проверка на папку и она не из наших ключей
+
             directory_tree(path / item.name)
+            
+            if not any(item.iterdir()): # проверка на пустую папку
+                item.rmdir()            # удаляем папку(пустую)
 
 
 
