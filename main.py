@@ -1,10 +1,5 @@
 from pathlib import Path
 import shutil
-import sys
-
-arg = sys.argv[1] # название папки для сортировки (рабочий стол/dir)
-path = Path.home() / "Desktop" / arg 
-main_path = path # путь к нашей папке для создания нових
 
 # известние файли для сортировки
 FILE_EXTENSIONS = {
@@ -48,6 +43,7 @@ def normalize(name : str) -> str :
 def  extract_archive(archive_path: Path, del_archive=True) :
     """
     разархивируем архив в папку с именем архива
+    с флагом на удаление архива + ловим ошибку
     """
     target_dir = archive_path.parent / archive_path.stem # путь для созданием папки с именем архива
     target_dir.mkdir(exist_ok=True) # создаем папку для архива
@@ -58,7 +54,17 @@ def  extract_archive(archive_path: Path, del_archive=True) :
     except ValueError:
         print(f"Не удалось разпаковать архив : {archive_path.name}")
   
-
+def input_path()-> Path:
+    """
+    инпут пути к папке 
+    проверка на валидность(существует+папка)
+    """
+    while True:
+        path = Path(input("Введите полний путь к папке которую хотите отсортировать:\n"))
+        if path.exists() and path.is_dir():
+            return path
+        else:
+            print("введений вами путь не существует или не является папкой\n")            
 
 
 def directory_tree (path: Path) :
@@ -109,16 +115,20 @@ def directory_tree (path: Path) :
 
 if __name__ == "__main__" :
 
-    # получаем сет всех известих расширений из константного словаря
+    # получаем сет всех известих(скрипту) расширений из константного словаря
     all_extens = set()
     for ext in FILE_EXTENSIONS.values():
         all_extens.update(ext)
 
-    my_dict_files = {} # словарь список файлов по категориям
-    my_extens = set()
+    my_dict_files = {} # словарь для записи -  категория : [файли]
+    my_extens = set() # сет для записи всех имеющихся расширений в папке
 
+    path = input_path()
+    main_path = path # путь к нашей папке для создания нових
     directory_tree(path)
     
+
+
     print("\nсписок файлов в сортированной дериктории  по категориям :\n")
     for key, val in my_dict_files.items() :
         val_str = ", ".join(val)
