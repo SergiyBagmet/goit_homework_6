@@ -10,8 +10,6 @@ FILE_EXTENSIONS = {
     'archives': {'.zip', '.gz', '.tar'}
 }
 
-
-
 # константи для переименования файлов
 CYRILLIC_SYMBOLS = "абвгдеёжзийклмнопрстуфхцчшщъыьэюяєіїґ"
 TRANSLATION = ("a", "b", "v", "g", "d", "e", "e", "j", "z", "i", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u",
@@ -40,6 +38,8 @@ def normalize(name : str) -> str :
                 new_name += "_"    
         return new_name
 
+
+
 def  extract_archive(archive_path: Path, del_archive=True) :
     """
     разархивируем архив в папку с именем архива
@@ -54,6 +54,8 @@ def  extract_archive(archive_path: Path, del_archive=True) :
     except ValueError:
         print(f"Не удалось разпаковать архив : {archive_path.name}")
   
+
+
 def input_path()-> Path:
     """
     инпут пути к папке 
@@ -67,7 +69,9 @@ def input_path()-> Path:
             print("введений вами путь не существует или не является папкой\n")            
 
 
-def directory_tree (path: Path) :
+
+
+def directory_tree (path: Path,  my_dict_files=None) :
     """
     основной рекурсивний проход 
     всех папок и файлов
@@ -86,15 +90,16 @@ def directory_tree (path: Path) :
             if not name_dir: # если нет совпадений по константе
                 name_dir = "others"    
             
-            # заполнение сета расширений
-            # + заполнение словаря-> категория : [файли]
+            # заполнение сета расширений my_extens
+            # + заполнение my_dict_files-> категория : [файли]
             my_extens.add(item.suffix)
+            if  my_dict_files is None :  my_dict_files = {} #создаем словарь на первом заходе 
             if name_dir not in my_dict_files : # если нет ключа создаем ключ:спиок
                 my_dict_files[name_dir] = [item.stem]
             else:
                 my_dict_files[name_dir].append(item.stem)         
 
-
+            # создание папок + перемещение файлов + работа с архивами 
             new_dir_path = main_path / name_dir # путь к новой папке для ее создание и переноса файлов
             new_dir_path.mkdir(exist_ok=True) # создаем новую папку если такой нет 
             item = item.replace(new_dir_path / item.name) # перенос файлов в папки по категориям
@@ -106,10 +111,12 @@ def directory_tree (path: Path) :
 
         elif item.is_dir() and (item.name not in FILE_EXTENSIONS) : # проверка на папку и она не из наших ключей
 
-            directory_tree(path / item.name)
+            my_dict_files = directory_tree(path / item.name, my_dict_files) # рекурсивний заход + my_dict_files-> категория : [файли]
             
             if not any(item.iterdir()): # проверка на пустую папку
                 item.rmdir()            # удаляем папку(пустую)
+
+    return  my_dict_files
 
 
 
@@ -120,15 +127,15 @@ if __name__ == "__main__" :
     for ext in FILE_EXTENSIONS.values():
         all_extens.update(ext)
 
-    my_dict_files = {} # словарь для записи -  категория : [файли]
+    # my_dict_files = {} # словарь для записи -  категория : [файли]
     my_extens = set() # сет для записи всех имеющихся расширений в папке
 
     path = input_path()
     main_path = path # путь к нашей папке для создания нових
-    directory_tree(path)
+    my_dict_files = directory_tree(path)
     
 
-
+    
     print("\nсписок файлов в сортированной дериктории  по категориям :\n")
     for key, val in my_dict_files.items() :
         val_str = ", ".join(val)
