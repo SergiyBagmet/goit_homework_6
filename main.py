@@ -133,13 +133,16 @@ def directory_tree (path: Path,  my_dict_files=None) :
     return  my_dict_files
 
 def main():
+    path = input_path()
+    global main_path # TODO найти другой способ
+    main_path =  path # путь к нашей папке для создания нових
+    
     # получаем сет всех известих(скрипту) расширений из константного словаря
     all_extens = set()
     for ext in FILE_EXTENSIONS.values():
         all_extens.update(ext)
 
     # my_dict_files = {} # словарь для записи -  категория : [файли]
-    
     my_dict_files = directory_tree(path) # визов рекурсивного прохода
     
     print("\nсписок файлов в сортированной дериктории  по категориям :\n")
@@ -157,7 +160,5 @@ def main():
 
 
 if __name__ == "__main__" :
-    path = input_path()
-    main_path = path # путь к нашей папке для создания нових
     main()
     
